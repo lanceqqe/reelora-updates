@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reelora</title>
+<meta name="description" content="Reelora — фильмы и сериалы в одном приложении для macOS, Windows и Android TV.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: одна колонка ~720px — шапка-карточка приложения, выбор платформы, лента релизов */
+:root {
+  --bg: #1c1c1e;
+  --panel: #252527;
+  --raised: #343438;
+  --line: rgba(255,255,255,.08);
+  --text: #f3f3f7;
+  --muted: #b3b3bb;
+  --accent: #71acff;
+  --primary: #1463cc;
+  --violet: #8b7cf6;
+  --soft: rgba(113,172,255,.16);
+  --green: #2bbd6e;
+  --font: "Manrope", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f4f4f7; --panel: #ffffff; --raised: #ebebf0; --line: rgba(20,20,40,.09);
+    --text: #141418; --muted: #5d5d68; --accent: #1463cc; --primary: #1463cc;
+    --violet: #6d5ce8; --soft: rgba(20,99,204,.1); --green: #17914f; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f4f4f7; --panel: #ffffff; --raised: #ebebf0; --line: rgba(20,20,40,.09);
+  --text: #141418; --muted: #5d5d68; --accent: #1463cc; --primary: #1463cc;
+  --violet: #6d5ce8; --soft: rgba(20,99,204,.1); --green: #17914f; color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); font-family: var(--font);
+  font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 720px; margin: 0 auto;
+  padding-block: 56px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 44px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 10px; }
+
+/* Шапка */
+.app { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+.app img { width: 112px; height: 112px; display: block; filter: drop-shadow(0 14px 30px rgba(110,90,240,.35)); }
+.app h1 { margin: 0; font-size: 42px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; }
+.tag { margin: 6px 0 0; color: var(--muted); font-size: 17px; text-wrap: balance; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.chip {
+  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  background: var(--raised); color: var(--muted);
+}
+.chip.v { background: var(--soft); color: var(--accent); font-family: var(--mono); font-weight: 500; }
+
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+  background: var(--primary); color: #fff; font-weight: 700; font-size: 16px;
+  padding: 14px 22px; border-radius: 14px; border: 0; cursor: pointer;
+  transition: transform .15s ease, filter .15s ease;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: scale(.98); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn small { font-weight: 500; opacity: .75; font-size: 13px; }
+.cta .hint { color: var(--muted); font-size: 13px; }
+
+/* Платформы */
+h2 { margin: 0 0 14px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.plats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.plat {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 18px 8px 14px; border-radius: 16px; background: var(--panel);
+  border: 1px solid var(--line); color: var(--text); font: inherit; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.plat svg { width: 30px; height: 30px; }
+.plat b { font-size: 14px; font-weight: 700; }
+.plat span { font-size: 12px; color: var(--muted); }
+.plat:hover:not(:disabled) { border-color: var(--accent); }
+.plat[aria-pressed="true"] { border-color: var(--accent); background: var(--soft); }
+.plat:disabled { cursor: default; opacity: .55; }
+.plat:disabled span { color: var(--violet); font-weight: 600; }
+
+.detail {
+  margin-top: 12px; padding: 18px 20px; border-radius: 16px; background: var(--panel);
+  border: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 16px;
+  align-items: center; justify-content: space-between;
+}
+.detail .info { min-width: 0; }
+.detail .info b { display: block; font-size: 16px; }
+.detail .info span { color: var(--muted); font-size: 13px; }
+.detail .btn { padding: 11px 18px; font-size: 15px; }
+.detail .dl { display: flex; flex-wrap: wrap; gap: 10px; }
+.steps { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.steps li + li { margin-top: 2px; }
+
+/* Релизы */
+.rel { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rel > li { display: grid; grid-template-columns: 110px minmax(0,1fr); gap: 18px; padding: 18px 0; border-top: 1px solid var(--line); }
+.rel > li:first-child { border-top: 0; padding-top: 4px; }
+.rel .ver { font-family: var(--mono); font-size: 15px; color: var(--text); }
+.rel .date { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rel .new { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--green); }
+.notes { min-width: 0; }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li + li { margin-top: 4px; }
+.notes p { margin: 0; }
+.files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.files a {
+  font-size: 12px; font-weight: 600; text-decoration: none; color: var(--accent);
+  padding: 4px 10px; border-radius: 8px; background: var(--soft);
+}
+.files a:hover { text-decoration: underline; }
+.more {
+  margin-top: 6px; align-self: flex-start; background: none; border: 1px solid var(--line); color: var(--text);
+  font: inherit; font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 12px; cursor: pointer;
+}
+.more:hover { border-color: var(--accent); }
+
+footer { color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+@media (max-width: 560px) {
+  .wrap { padding-block: 32px 56px; gap: 36px; }
+  .app { grid-template-columns: 1fr; justify-items: start; gap: 16px; }
+  .app img { width: 84px; height: 84px; }
+  .app h1 { font-size: 34px; }
+  .plats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rel > li { grid-template-columns: 1fr; gap: 8px; }
+  .cta .btn, .detail .dl, .detail .dl .btn { width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<main class="wrap">
+  <header class="app">
+    <img src="data:image/png;base64,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" alt="Значок Reelora" width="112" height="112">
+    <div>
+      <h1>Reelora</h1>
+      <p class="tag">Фильмы и сериалы из нескольких каталогов в одном приложении: подборки, поиск, «Я смотрю» и плеер с выбором озвучки, качества и субтитров.</p>
+      <div class="meta">
+        <span class="chip v" id="latest-ver"></span>
+        <span class="chip" id="latest-date"></span>
+        <span class="chip">Обновляется само</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="cta" id="cta"></div>
+
+  <section aria-labelledby="h-plat">
+    <h2 id="h-plat">Платформы</h2>
+    <div class="plats" id="plats" role="group" aria-label="Выбор платформы"></div>
+    <div class="detail" id="detail"></div>
+  </section>
+
+  <section aria-labelledby="h-rel" style="display:flex;flex-direction:column">
+    <h2 id="h-rel">Что нового</h2>
+    <ul class="rel" id="rel"></ul>
+    <button class="more" id="more" type="button" hidden>Показать все версии</button>
+  </section>
+
+  <footer>Reelora · Приложение проверяет обновления само и предлагает поставить новую версию, когда она выходит.</footer>
+</main>
+
+<script>
+const SNAPSHOT = [{"tag_name":"v0.4.7","published_at":"2026-11-24T20:01:45Z","body":"Android TV: Reelora на ТВ-приставках — управление пультом, аппаратное видео (плавно на слабых приставках, HDR10 на телевизор), вход по 8-значному коду с компьютера. Для Mi Box и других 32-битных приставок — armeabi-v7a, для новых — arm64-v8a.\nWindows: ТВ-режим для PC Hub Launcher (--tv) с управлением геймпадом.\n«Для вас»: фильмы, досмотренные до титров, уходят из «Продолжить просмотр»; крестик убирает тайтл оттуда.","assets":[{"name":"Reelora-0.4.7-arm64-mac.dmg","size":40728083,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.7/Reelora-0.4.7-arm64-mac.dmg"},{"name":"Reelora-0.4.7-tv-arm64-v8a.apk","size":32991835,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.7/Reelora-0.4.7-tv-arm64-v8a.apk"},{"name":"Reelora-0.4.7-tv-armeabi-v7a.apk","size":29943871,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.7/Reelora-0.4.7-tv-armeabi-v7a.apk"},{"name":"Reelora-Setup-0.4.7.exe","size":51068064,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.7/Reelora-Setup-0.4.7.exe"}]},{"tag_name":"v0.4.6","published_at":"2026-11-24T18:38:26Z","body":"Windows: HDR (экспериментально). Включите в «Настройки → Экран»: HDR10, HLG и Dolby Vision выводятся в HDR, когда HDR включён в параметрах Windows; SDR-видео выглядит как раньше. Без настройки плеер работает по-прежнему.","assets":[{"name":"Reelora-0.4.6-arm64-mac.dmg","size":40469612,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.6/Reelora-0.4.6-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.6.exe","size":51040811,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.6/Reelora-Setup-0.4.6.exe"}]},{"tag_name":"v0.4.5","published_at":"2026-11-24T17:33:12Z","body":"Плеер сам пропускает заставку и «Ранее в сериале»: полупрозрачная кнопка заполняется, крестик отменяет авто-пропуск. «Назад» и «Вперёд» (и жест трекпада) сохраняют страницу и прокрутку.","assets":[{"name":"Reelora-0.4.5-arm64-mac.dmg","size":40471537,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.5/Reelora-0.4.5-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.5.exe","size":51038442,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.5/Reelora-Setup-0.4.5.exe"}]},{"tag_name":"v0.4.4","published_at":"2026-11-24T16:57:40Z","body":"«Для вас»: просто карточки, без повторяющейся подписи «Потому что вы смотрели…».","assets":[{"name":"Reelora-0.4.4-arm64-mac.dmg","size":40462628,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.4/Reelora-0.4.4-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.4.exe","size":51036666,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.4/Reelora-Setup-0.4.4.exe"}]},{"tag_name":"v0.4.3","published_at":"2026-11-24T11:27:30Z","body":"Идущие сериалы: бейдж «Выходит» и дата следующей серии по TMDB, ещё не вышедшие и ждущие озвучки серии в ленте, плитка премьеры нового сезона. Прогресс серий в меню плеера. ПКМ у «Продолжить просмотр» в «Для вас». Режим чёлки открывает плеер на отдельном рабочем столе и удаляет его при выходе.","assets":[{"name":"Reelora-0.4.3-arm64-mac.dmg","size":40462546,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.3/Reelora-0.4.3-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.3.exe","size":51034677,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.3/Reelora-Setup-0.4.3.exe"}]},{"tag_name":"v0.4.2","published_at":"2026-11-24T11:11:39Z","body":"Рекомендации «Для вас» считает шлюз: один список на день по тому, что вы смотрели и бросили, с похожими на любимые тайтлы и хитами любимых жанров.","assets":[{"name":"Reelora-0.4.2-arm64-mac.dmg","size":40400114,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.2/Reelora-0.4.2-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.2.exe","size":51023010,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.2/Reelora-Setup-0.4.2.exe"}]},{"tag_name":"v0.4.1","published_at":"2026-11-24T10:40:00Z","body":"Кнопки «предыдущая/следующая серия» рядом с перемоткой, в меню серий плеера сезоны сверху. Меньше энергопотребление при просмотре и в фоне: каталог не рисуется под плеером, таймеры видео работают только во время воспроизведения.","assets":[{"name":"Reelora-0.4.1-arm64-mac.dmg","size":40396616,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.1/Reelora-0.4.1-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.1.exe","size":51025590,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.1/Reelora-Setup-0.4.1.exe"}]},{"tag_name":"v0.4.0","published_at":"2026-11-24T10:19:52Z","body":"Плеер запоминает озвучку, скорость, кадрирование, масштаб, качество и источник для каждого сериала; плашка «Следующая серия» и новое меню скорости. В режиме чёлки — часы и заряд, исправлены курсор и фокус клавиатуры, Reelora в «Сейчас играет» на Mac и в медиапанели Windows. На карточке сериала — сезоны, серии и история просмотра. Светлая тема. Поиск находит KinoPub для тайтлов под разными названиями.","assets":[{"name":"Reelora-0.4.0-arm64-mac.dmg","size":40397391,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.0/Reelora-0.4.0-arm64-mac.dmg"},{"name":"Reelora-Setup-0.4.0.exe","size":51024059,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.4.0/Reelora-Setup-0.4.0.exe"}]},{"tag_name":"v0.3.0","published_at":"2026-11-24T01:05:45Z","body":"Встроенный плеер на macOS открывает MKV, WebM, AVI, TS, HDR10, HLG и Dolby Vision через libmpv. Совместный просмотр по ссылке. Поиск ставит выше совпадения по началу названия, актёры и жанры в карточках кликабельны.","assets":[{"name":"Reelora-0.3.0-arm64-mac.dmg","size":40340999,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.3.0/Reelora-0.3.0-arm64-mac.dmg"},{"name":"Reelora-Setup-0.3.0.exe","size":50982438,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.3.0/Reelora-Setup-0.3.0.exe"}]},{"tag_name":"v0.2.19","published_at":"2026-11-23T16:52:14Z","body":"Пропуск заставки и финальных титров почти во всех сериалах: метки из открытых баз или найденные шлюзом по звуку соседних серий. «Для вас» учитывает импорт из Shikimori и историю, слепок вкусов в профиле.","assets":[{"name":"Reelora-0.2.19-arm64-mac.dmg","size":11048666,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.19/Reelora-0.2.19-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.19.exe","size":50948456,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.19/Reelora-Setup-0.2.19.exe"}]},{"tag_name":"v0.2.18","published_at":"2026-11-23T14:52:20Z","body":"Поиск сразу по нескольким каталогам (Kino.watch, KinoBase, TMDB); обновлённая история поиска.","assets":[{"name":"Reelora-0.2.18-arm64-mac.dmg","size":11021781,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.18/Reelora-0.2.18-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.18.exe","size":50926389,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.18/Reelora-Setup-0.2.18.exe"}]},{"tag_name":"v0.2.17","published_at":"2026-11-23T12:55:36Z","body":"- Под строкой поиска появились последние 12 запросов. Историю можно открыть из пустой строки поиска или по значку часов.\n- Запрос можно повторить одним кликом. Повторные запросы поднимаются наверх, список можно очистить из меню.\n- История сохраняется на устройстве.\n","assets":[{"name":"Reelora-0.2.17-arm64-mac.dmg","size":11016333,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.17/Reelora-0.2.17-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.17.exe","size":50926746,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.17/Reelora-Setup-0.2.17.exe"}]},{"tag_name":"v0.2.16","published_at":"2026-11-23T12:34:04Z","body":"- В «Что посмотреть сегодня» появился отдельный тип «Аниме». Пункт «Фильмы и сериалы» сохранён.\n- Локальные видео можно открыть через Finder или Проводник, перетащить в окно Reelora или выбрать в приложении. Раздел «Локальные файлы» появляется сверху после первого запуска видео.\n- При открытии нескольких файлов плеер показывает их список и автоматически переходит к следующему. Доступны дорожки звука, субтитры, кадрирование, масштаб и продолжение просмотра.\n- В меню «О файле» можно изменить описание, рейтинг и свою оценку, указать время заставки и титров или выбрать сведения из TMDB.\n","assets":[{"name":"Reelora-0.2.16-arm64-mac.dmg","size":10976986,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.16/Reelora-0.2.16-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.16.exe","size":50896486,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.16/Reelora-Setup-0.2.16.exe"}]},{"tag_name":"v0.2.15","published_at":"2026-11-23T06:33:29Z","body":"- На главной «Для вас» блоки «Продолжить просмотр» и «Новые серии» появляются, когда в них есть записи.\n- Рекомендации по истории и оценкам теперь показаны сеткой с кнопкой «Показать ещё».\n- В разделе «Что посмотреть сегодня» в боковом меню можно выбрать фильмы, сериалы или оба типа. Подбор учитывает жанр и время и позволяет догружать результаты.\n","assets":[{"name":"Reelora-0.2.15-arm64-mac.dmg","size":10696789,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.15/Reelora-0.2.15-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.15.exe","size":50725011,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.15/Reelora-Setup-0.2.15.exe"}]},{"tag_name":"v0.2.14","published_at":"2026-11-23T06:03:29Z","body":"- Главная «Для вас» собирает продолжение просмотра, новые серии из «Я смотрю» и рекомендации.\n- «Что посмотреть сегодня» подбирает фильмы и сериалы по жанру и доступному времени.\n- На проверенных эпизодах Kino.watch плеер предлагает пропустить заставку или перейти к следующей серии с титров.\n- Масштаб видео доступен в настройках плеера.\n","assets":[{"name":"Reelora-0.2.14-arm64-mac.dmg","size":10691050,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.14/Reelora-0.2.14-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.14.exe","size":50720695,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.14/Reelora-Setup-0.2.14.exe"}]},{"tag_name":"v0.2.12","published_at":"2026-11-23T00:34:37Z","body":"- В полноэкранном режиме macOS кнопки «Назад» и «Вперёд» сдвигаются влево, когда скрываются кнопки окна.\n- В подборках КиноПаба отображаются обложки. Если готовая обложка недоступна, Reelora собирает коллаж из постеров фильмов и сериалов подборки.\n\nУстановщики для macOS (Apple silicon) и Windows (x64).\n","assets":[{"name":"Reelora-0.2.12-arm64-mac.dmg","size":10657017,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.12/Reelora-0.2.12-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.12.exe","size":50706559,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.12/Reelora-Setup-0.2.12.exe"}]},{"tag_name":"v0.2.11","published_at":"2026-11-23T00:15:28Z","body":"- Свайп двумя пальцами перелистывает историю с анимацией. Карточка следует за жестом и возвращается на место, если переход отменён.\n- Mouse 4 и Mouse 5 переключают историю назад и вперёд. Ручка окна выровнена по центру и расширяется при наведении.\n- Карточка получает до шести готовых кадров через шлюз Reelora.\n","assets":[{"name":"Reelora-0.2.11-arm64-mac.dmg","size":10655961,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.11/Reelora-0.2.11-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.11.exe","size":50703474,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.11/Reelora-Setup-0.2.11.exe"}]},{"tag_name":"v0.2.9","published_at":"2026-11-22T23:25:54Z","body":"Режим чёлки без светлой линии по краям экрана. Кадры в карточке появляются быстрее (после обновления шлюза).","assets":[{"name":"Reelora-0.2.9-arm64-mac.dmg","size":10646665,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.9/Reelora-0.2.9-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.9.exe","size":50695652,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.9/Reelora-Setup-0.2.9.exe"}]},{"tag_name":"v0.2.8","published_at":"2026-11-22T23:12:17Z","body":"Режим чёлки в плеере, запуск на весь экран, перетаскиваемая верхняя панель плеера, масштаб видео (+ / − / 0), ровные кнопки окна и профиль.","assets":[{"name":"Reelora-0.2.8-arm64-mac.dmg","size":10646311,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.8/Reelora-0.2.8-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.8.exe","size":50695682,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.8/Reelora-Setup-0.2.8.exe"}]},{"tag_name":"v0.2.7","published_at":"2026-11-22T22:46:22Z","body":"Источники Collaps, CDNVideoHub и AniLiberty снова играют; ошибка одного источника не прячет остальные. На Windows новый плеер mpv: дальняя перемотка больше не зависает, «Авто» стартует с 1080p и снижает качество при долгой загрузке. Удаление прямо из списков, очистка истории, кнопка «Продолжить», актёры и режиссёры на карточке.","assets":[{"name":"Reelora-0.2.7-arm64-mac.dmg","size":10602137,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.7/Reelora-0.2.7-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.7.exe","size":50675235,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.7/Reelora-Setup-0.2.7.exe"}]},{"tag_name":"v0.2.5","published_at":"2026-11-22T18:22:29Z","body":"- Кнопки верхней панели реагируют сразу. Системные жесты окна работают на свободном месте панели.\n- Кнопка «Списки» и пункты её меню подсвечиваются при наведении и нажатии. В меню доступны «Я смотрю», «В планах» и «Посмотрел».\n- Сериалы можно добавить в «Я смотрю» из карточки. Меню и строки сериалов показывают новые серии, а подписки синхронизируются с профилем.\n- На macOS доступны системные уведомления о новых сериях. На Windows новые серии видны по счётчикам в приложении.\n- Установщики для macOS Apple silicon и Windows x64.\n","assets":[{"name":"Reelora-0.2.5-arm64-mac.dmg","size":10431847,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.5/Reelora-0.2.5-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.5.exe","size":25266846,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.5/Reelora-Setup-0.2.5.exe"}]},{"tag_name":"v0.2.4","published_at":"2026-11-22T17:50:17Z","body":"- Видео стартует быстрее: пока открыта карточка, плеер заранее загружает начало серии (или место, где вы остановились), и после «Смотреть» картинка появляется почти сразу.\n- На Windows плеер больше не опрашивает все озвучки и субтитры при запуске: открывается только выбранная дорожка, старт с 25–40 с сократился до 3–5 с. Смена озвучки или субтитров продолжает с того же места.\n- Карточки и каталог открываются быстрее: шлюз кэширует страницы и сразу отдаёт сохранённый каталог, обновляя его в фоне.\n- Установщики для macOS на Apple Silicon и Windows x64.","assets":[{"name":"Reelora-0.2.4-arm64-mac.dmg","size":10403336,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.4/Reelora-0.2.4-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.4.exe","size":25252161,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.4/Reelora-Setup-0.2.4.exe"}]},{"tag_name":"v0.2.3","published_at":"2026-11-22T16:43:38Z","body":"- Экран больше не гаснет, пока в плеере идёт видео.\n- Убрали лишнюю пересинхронизацию звука, хвост звука после паузы стал короче.\n- Windows-версия теперь тоже на Flutter (плеер на libmpv). Старая Electron-версия обновится и удалится сама, данные профиля сохраняются.\n- Установщики для macOS на Apple Silicon и Windows x64.\n","assets":[{"name":"Reelora-0.2.3-arm64-mac.dmg","size":10384536,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.3/Reelora-0.2.3-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.3.exe","size":25241204,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.3/Reelora-Setup-0.2.3.exe"}]},{"tag_name":"v0.2.2","published_at":"2026-11-22T09:15:12Z","body":"- Исправили скачок позиции после быстрых повторных перемоток.\n- Ускорили открытие плеера, загрузку каталога и подготовку HLS.\n- В плеере macOS появилась настройка «Синхронизация» с автоматическим подбором по аудиовыходу и ручной задержкой изображения до 125 мс. По умолчанию настройка выключена.\n- Установщики для macOS на Apple Silicon (Flutter) и Windows x64 (Electron).\n","assets":[{"name":"Reelora-0.2.2-arm64-mac.dmg","size":10241538,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.2/Reelora-0.2.2-arm64-mac.dmg"},{"name":"Reelora-Setup-0.2.2.exe","size":128240383,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.2/Reelora-Setup-0.2.2.exe"}]},{"tag_name":"v0.2.1","published_at":"2026-11-22T08:36:57Z","body":"Восстановлена оригинальная иконка Reelora для macOS.","assets":[{"name":"Reelora-0.2.1-arm64-mac.dmg","size":20477854,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.1/Reelora-0.2.1-arm64-mac.dmg"},{"name":"Reelora-Setup-0.1.1.exe","size":128158666,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.1/Reelora-Setup-0.1.1.exe"}]},{"tag_name":"v0.2.0","published_at":"2026-11-22T08:29:54Z","body":"Reelora 0.2.0 для macOS на Flutter. Плеер работает через AVPlayer, меню озвучки показывает доступные кодеки и раскладки каналов. Видео открывается в режиме «Вписать», а исходный размер можно выбрать в меню.\n\nВ профиле доступны регистрация, вход и синхронизация медиатеки. Новые выпуски Flutter загружаются в фоне и устанавливаются при перезапуске.\n\nВ Electron 0.1.0 и 0.1.1 проверка обновлений скачивает и открывает этот DMG. Для первого перехода замените Reelora.app в «Программах». Файлы Windows обслуживают выпуск 0.1.1.\n","assets":[{"name":"Reelora-0.2.0-arm64-mac.dmg","size":20406278,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.0/Reelora-0.2.0-arm64-mac.dmg"},{"name":"Reelora-Setup-0.1.1.exe","size":128158666,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.2.0/Reelora-Setup-0.1.1.exe"}]},{"tag_name":"v0.1.1","published_at":"2026-11-22T06:31:24Z","body":"В «Настройках» появился раздел «Кэш»: размер кэша на диске, предел и кнопка очистки.","assets":[{"name":"Reelora-0.1.1-arm64-mac.dmg","size":128233224,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.1.1/Reelora-0.1.1-arm64-mac.dmg"},{"name":"Reelora-Setup-0.1.1.exe","size":128158666,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.1.1/Reelora-Setup-0.1.1.exe"}]},{"tag_name":"v0.1.0","published_at":"2026-11-22T06:11:34Z","body":"Первый выпуск Reelora для macOS (Apple silicon) и Windows x64.\n\n- Витрина и категории Kino.watch, поиск по KinoBase, карточки фильмов и сериалов, избранное и история.\n- Плеер HLS через шлюз: качество, серии, озвучки, субтитры, кадрирование.\n- «Настройки» с подключением и проверкой обновлений. Обновления приходят из этого репозитория.\n","assets":[{"name":"Reelora-0.1.0-arm64-mac.dmg","size":128232131,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.1.0/Reelora-0.1.0-arm64-mac.dmg"},{"name":"Reelora-Setup-0.1.0.exe","size":128157769,"browser_download_url":"https://github.com/lanceqqe/reelora-updates/releases/download/v0.1.0/Reelora-Setup-0.1.0.exe"}]}];
+
+const ICONS = {
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>',
+  mac: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.730-1.77-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.16.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.65zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.1 1.76-.96 2.8 1.020.08 2.05-.52 2.68-1.28z"/></svg>',
+  win: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.4 10.4 4.4v7.1H3zM11.3 4.3 21 3v8.5h-9.7zM3 12.4h7.4v7.1L3 18.5zM11.3 12.4H21V21l-9.7-1.3z"/></svg>',
+  ios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg>',
+  android: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 9.5h12v7.2c0 .7-.6 1.3-1.3 1.3H16v2.5a1.25 1.25 0 0 1-2.5 0V18h-3v2.5a1.25 1.25 0 0 1-2.5 0V18h-.7c-.7 0-1.3-.6-1.3-1.3zM3.75 9.5C4.44 9.5 5 10.06 5 10.750v4.5a1.25 1.25 0 0 1-2.5 0v-4.5c0-.69.56-1.25 1.25-1.25zm16.5 0c.69 0 1.25.56 1.25 1.25v4.5a1.25 1.25 0 0 1-2.5 0v-4.5c0-.69.56-1.25 1.25-1.25zM15.6 4.1l1.1-1.7a.3.3 0 0 0-.5-.3L15 3.8A6.3 6.3 0 0 0 12 3a6.3 6.3 0 0 0-3 .8L7.8 2.1a.3.3 0 0 0-.5.3l1.1 1.7A5.4 5.4 0 0 0 6 8.6h12a5.4 5.4 0 0 0-2.4-4.5zM9.5 6.9a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zm5 0a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z"/></svg>',
+  tv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 21h8M9 2.5l3 2 3-2" stroke-linecap="round"/></svg>',
+};
+
+
+// Релизы: при открытии страница берёт свежий список из GitHub API, а до ответа (и если API недоступен)
+// показывает снимок, вшитый при сборке (build.mjs). Если и снимка нет — жёсткие ссылки на v0.4.7.
+const REPO = 'lanceqqe/reelora-updates';
+const FALLBACK = [{
+  tag_name: 'v0.4.7', published_at: '2026-11-24T20:01:45Z', body: '',
+  assets: ['Reelora-0.4.7-arm64-mac.dmg', 'Reelora-Setup-0.4.7.exe', 'Reelora-0.4.7-tv-armeabi-v7a.apk', 'Reelora-0.4.7-tv-arm64-v8a.apk']
+    .map(name => ({ name, size: 0, browser_download_url: `https://github.com/${REPO}/releases/download/v0.4.7/${name}` })),
+}];
+
+const ASSET_RULES = {
+  mac: /\.dmg$/i,
+  win: /Setup.*\.exe$/i,
+  tv32: /tv-armeabi-v7a\.apk$/i,
+  tv64: /tv-arm64-v8a\.apk$/i,
+};
+
+function normalize(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(r => r && !r.draft && !r.prerelease)
+    .map(r => {
+      const assets = {};
+      for (const [id, re] of Object.entries(ASSET_RULES)) {
+        const a = (r.assets || []).find(x => re.test(x.name));
+        if (a) assets[id] = { url: a.browser_download_url, size: a.size || 0, name: a.name };
+      }
+      return {
+        version: String(r.tag_name || '').replace(/^v/, ''),
+        date: r.published_at,
+        notes: String(r.body || '').replace(/\r/g, '').replace(/^Установщики для macOS.*$/m, '').trim(),
+        assets,
+      };
+    })
+    .filter(r => Object.keys(r.assets).length)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+let RELEASES = normalize(SNAPSHOT);
+if (!RELEASES.length) RELEASES = normalize(FALLBACK);
+let latest = RELEASES[0];
+
+const TV_STEPS = [
+  'Скачайте APK на флешку или сразу на приставку (например, через приложение Downloader).',
+  'Разрешите установку из неизвестных источников для файлового менеджера и откройте APK.',
+  'Вход: на ТВ откройте «Профиль» — появится 8-значный код. Введите его на компьютере в Reelora → Профиль → «Войти на телевизоре».',
+];
+
+const PLATFORMS = [
+  { id: 'mac', name: 'macOS', sub: 'Apple silicon', type: 'DMG', files: [['mac', 'Скачать']],
+    steps: ['Откройте DMG и перетащите Reelora в «Программы».', 'При первом запуске: правый клик по значку → «Открыть».'] },
+  { id: 'win', name: 'Windows', sub: 'x64 · 10 и 11', type: 'Установщик', files: [['win', 'Скачать']],
+    steps: ['Запустите установщик и следуйте шагам.', 'Если SmartScreen предупредит: «Подробнее» → «Выполнить в любом случае».',
+      'Для PC Hub Launcher и геймпада запускайте с ключом --tv.'] },
+  { id: 'tv', name: 'Android TV', sub: 'Пульт · HDR10', type: 'APK',
+    files: [['tv32', 'Mi Box и 32-битные'], ['tv64', 'Новые (arm64)']], steps: TV_STEPS },
+  { id: 'ios', name: 'iOS', sub: 'Скоро', soon: true },
+  { id: 'android', name: 'Android', sub: 'Скоро', soon: true },
+];
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mb = b => b ? (b / 1048576).toFixed(b > 104857600 ? 0 : 1).replace('.', ',') + ' МБ' : '';
+const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const withSize = (label, a) => a.size ? `${label} <small>${mb(a.size)}</small>` : label;
+
+function detectOS() {
+  const ua = navigator.userAgent;
+  const touch = navigator.maxTouchPoints > 1;
+  if (/Android/i.test(ua)) return /TV|AFT|BRAVIA|MiBOX|Chromecast/i.test(ua) ? 'tv' : 'android';
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && touch)) return 'ios';
+  if (/Windows/i.test(ua)) return 'win';
+  if (/Macintosh|Mac OS X/i.test(ua)) return 'mac';
+  return null;
+}
+
+function notesHTML(text) {
+  const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+  let out = '', list = false;
+  for (const l of lines) {
+    if (/^[-*]\s+/.test(l)) {
+      if (!list) { out += '<ul>'; list = true; }
+      out += '<li>' + esc(l.replace(/^[-*]\s+/, '')) + '</li>';
+    } else {
+      if (list) { out += '</ul>'; list = false; }
+      out += '<p>' + esc(l) + '</p>';
+    }
+  }
+  return out + (list ? '</ul>' : '');
+}
+
+const OS = detectOS();
+let selected = ['win', 'tv'].includes(OS) ? OS : 'mac';
+const available = id => PLATFORMS.find(p => p.id === id).files?.some(([k]) => latest.assets[k]);
+const READY = 'macOS, Windows и Android TV';
+
+function renderHeader() {
+  document.getElementById('latest-ver').textContent = 'v' + latest.version;
+  document.getElementById('latest-date').textContent = fmtDate(latest.date);
+}
+
+function renderCTA() {
+  const p = PLATFORMS.find(x => x.id === OS && !x.soon && available(x.id));
+  const el = document.getElementById('cta');
+  if (p && p.files.length === 1) {
+    const a = latest.assets[p.files[0][0]];
+    el.innerHTML = `<a class="btn" href="${esc(a.url)}">${ICONS.download}${withSize('Скачать для ' + p.name, a)}</a>
+      <span class="hint">Другая система? Выберите ниже.</span>`;
+  } else {
+    const soon = PLATFORMS.find(x => x.id === OS && x.soon);
+    el.innerHTML = `<a class="btn" href="#h-plat">${ICONS.download}Скачать Reelora</a>
+      <span class="hint">${soon ? `Версия для ${soon.name} ещё в работе. Пока есть ${READY}.` : `Доступно для ${READY}.`}</span>`;
+  }
+}
+
+function renderPlatforms() {
+  document.getElementById('plats').innerHTML = PLATFORMS.map(p =>
+    `<button class="plat" type="button" data-id="${p.id}" ${p.soon || !available(p.id) ? 'disabled' : ''} aria-pressed="${p.id === selected}">
+      ${ICONS[p.id]}<b>${p.name}</b><span>${p.sub}</span></button>`).join('');
+  const p = PLATFORMS.find(x => x.id === selected);
+  const files = p.files.map(([k, label]) => [latest.assets[k], label]).filter(([a]) => a);
+  const sizes = files.map(([a]) => mb(a.size)).filter(Boolean).join(' / ');
+  document.getElementById('detail').innerHTML = `
+    <div class="info">
+      <b>Reelora ${esc(latest.version)} для ${p.name}</b>
+      <span>${[p.type, sizes, p.sub].filter(Boolean).join(' · ')}</span>
+      <ol class="steps">${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+    </div>
+    <div class="dl">${files.map(([a, label]) => `<a class="btn" href="${esc(a.url)}" title="${esc(a.name)}">${ICONS.download}${withSize(esc(label), a)}</a>`).join('')}</div>`;
+}
+
+document.getElementById('plats').addEventListener('click', e => {
+  const b = e.target.closest('.plat');
+  if (!b || b.disabled) return;
+  selected = b.dataset.id;
+  renderPlatforms();
+});
+
+const FILE_LABELS = { mac: 'macOS', win: 'Windows', tv32: 'Android TV · armeabi-v7a', tv64: 'Android TV · arm64-v8a' };
+const SHOWN = 5;
+let showAll = false;
+function renderReleases() {
+  const list = showAll ? RELEASES : RELEASES.slice(0, SHOWN);
+  document.getElementById('rel').innerHTML = list.map((r, i) => `
+    <li>
+      <div><div class="ver">v${esc(r.version)}</div><div class="date">${fmtDate(r.date)}</div>${i === 0 ? '<span class="new">Последняя</span>' : ''}</div>
+      <div class="notes">${notesHTML(r.notes) || '<p>Исправления и улучшения.</p>'}
+        <div class="files">${Object.entries(FILE_LABELS).filter(([k]) => r.assets[k]).map(([k, l]) =>
+          `<a href="${esc(r.assets[k].url)}">${[l, mb(r.assets[k].size)].filter(Boolean).join(' · ')}</a>`).join('')}</div>
+      </div>
+    </li>`).join('');
+  const more = document.getElementById('more');
+  more.hidden = showAll || RELEASES.length <= SHOWN;
+  more.textContent = `Показать все версии (${RELEASES.length})`;
+}
+document.getElementById('more').addEventListener('click', () => { showAll = true; renderReleases(); });
+
+function renderAll() { renderHeader(); renderCTA(); renderPlatforms(); renderReleases(); }
+renderAll();
+
+fetch(`https://api.github.com/repos/${REPO}/releases?per_page=100`, { headers: { Accept: 'application/vnd.github+json' } })
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(raw => {
+    const fresh = normalize(raw);
+    if (!fresh.length) return;
+    RELEASES = fresh; latest = fresh[0];
+    if (!available(selected)) selected = 'mac';
+    renderAll();
+  })
+  .catch(() => {});
+</script>
+</body>
+</html>
